@@ -12,11 +12,11 @@
  */
 #include <SPI.h>
 #include <Ethernet.h>
-// include the library code:
 #include <LiquidCrystal.h>
+#include <Time.h>
+#include <TimeAlarms.h>
 #include<stdlib.h>
 
-// I2C library
 #include <Wire.h>
 // Sensor I2C address
 // Data pin from sensor
@@ -32,12 +32,14 @@ byte server[]   = {
 EthernetClient client;
 
 String varOne,contentLen,length;
-int timer =0;
+ float humidity;
+  float temperature;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
+ setTime(8,29,0,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
   //LCD
   // declare pin 9 to be an output:
   pinMode(9, OUTPUT);  
@@ -56,14 +58,15 @@ void setup() {
   
   // Give sensor time to start up 
   delay( 5000 );
+  Alarm.timerRepeat(15, Repeats); // every minute
 }
 
 void loop() {
-  timer = (millis()/1000);
-  Serial.println(timer);
+  //timer = (millis()/1000);
+  //Serial.println(timer);
+  Alarm.delay(1000); // wait one second between clock display
   byte state;
-  float humidity;
-  float temperature;
+ 
      
   // Read the values from the sensor
   // Takes local values to place sensor values
@@ -103,11 +106,17 @@ void loop() {
   updateLCD(" Temp  Humidity",( temperature * 9 ) / 5 + 32,humidity);
   
   client.connect(server, 8001);
-  if(timer >=1800){
+
+    //logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
+   // logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");
+
+
+}
+
+void Repeats(){
+  Serial.println("repeat");
     logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
-    logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");
-    timer=0;
-  }
+    logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");        
 }
 
 
@@ -179,7 +188,6 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
   
     char buffer2[14]; 
     String tempStr = dtostrf(value, 7,2,buffer2);
-    Serial.println(timer);
     client.println("POST /device/post/ HTTP/1.0");
     client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
     client.println("Host: 192.168.1.2:8001?refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr);
@@ -187,9 +195,6 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
     client.println();
   //client.println(values);
     client.println();
-
- 
-
 
   // we have read all we need from the server stop now
   if(!client.connected()) {
