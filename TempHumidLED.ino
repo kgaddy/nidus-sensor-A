@@ -32,6 +32,7 @@ byte server[]   = {
 EthernetClient client;
 
 String varOne,contentLen,length;
+int timer =0;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
@@ -58,7 +59,8 @@ void setup() {
 }
 
 void loop() {
-  
+  timer = (millis()/1000);
+  Serial.println(timer);
   byte state;
   float humidity;
   float temperature;
@@ -96,21 +98,16 @@ void loop() {
   Serial.println( ( temperature * 9 ) / 5 + 32 );
 
   // Give it a second before updating
-  delay( 1000 );
+  delay( 5000 );
   
   updateLCD(" Temp  Humidity",( temperature * 9 ) / 5 + 32,humidity);
-  if(client.connect(server, 8001)>0) {
-    logMsgToServer("temp" , "Temp Sensor", ( temperature * 9 ) / 5 + 32,"50");
+  
+  client.connect(server, 8001);
+  if(timer >=1800){
+    logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
+    logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");
+    timer=0;
   }
-  else{
-      Serial.println("not connected");
-   }
-     // we have read all we need from the server stop now
-  if(!client.connected()) {
-    client.stop();
-  }
- 
- 
 }
 
 
@@ -179,16 +176,25 @@ void updateLCD(String title,float temp,float humidity){
 
 
 void logMsgToServer(String code, String descr, float value,String lengthStr){
-  char buffer2[14]; 
-  String tempStr = dtostrf(value, 7,2,buffer2);
-  //Serial.println(temp);
-  client.println("POST /device/post/ HTTP/1.0");
-  client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
-  client.println("Host: 192.168.1.2:8001?refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr);
-  client.println(lengthStr);
-  client.println();
+  
+    char buffer2[14]; 
+    String tempStr = dtostrf(value, 7,2,buffer2);
+    Serial.println(timer);
+    client.println("POST /device/post/ HTTP/1.0");
+    client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
+    client.println("Host: 192.168.1.2:8001?refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr);
+    client.println(lengthStr);
+    client.println();
   //client.println(values);
-  client.println();
+    client.println();
+
+ 
+
+
+  // we have read all we need from the server stop now
+  if(!client.connected()) {
+    client.stop();
+  }
 }
 
 
