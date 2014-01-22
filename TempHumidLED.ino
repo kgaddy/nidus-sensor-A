@@ -23,12 +23,14 @@
 const byte ADDRESS = 0x27;
 const int  CLOCK_PIN = 5;
 const int  DATA_PIN = 4;
+const int  minutes = 30; //actually 1/2 minute
+int  minutes_count = 0;
 byte mac[] = {  
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 byte ip[] = { 
   192,168,1,177 };//this ipaddress
 byte server[]   = {
-  192,168,1,2};//the node server
+  192,168,1,124};//the node server
 EthernetClient client;
 
 String varOne,contentLen,length;
@@ -39,7 +41,7 @@ String varOne,contentLen,length;
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
- setTime(8,29,0,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
+ //setTime(8,29,0,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
   //LCD
   // declare pin 9 to be an output:
   pinMode(9, OUTPUT);  
@@ -58,7 +60,7 @@ void setup() {
   
   // Give sensor time to start up 
   delay( 5000 );
-  Alarm.timerRepeat(15, Repeats); // every minute
+  Alarm.timerRepeat(59, Repeats); // every minute
 }
 
 void loop() {
@@ -114,9 +116,15 @@ void loop() {
 }
 
 void Repeats(){
-  Serial.println("repeat");
-    logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
-    logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");        
+    minutes_count = minutes_count+1;
+    Serial.println(minutes_count);
+    if(minutes_count == minutes){
+      Serial.println("repeat");
+      logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
+      logMsgToServer("humidty" , "humidity Sensor office", humidity,"50"); 
+      minutes_count=0;
+    }
+       
 }
 
 
@@ -185,17 +193,19 @@ void updateLCD(String title,float temp,float humidity){
 
 
 void logMsgToServer(String code, String descr, float value,String lengthStr){
+  char buffer2[14]; 
+  String tempStr = dtostrf(value, 7,2,buffer2);
+  String PostData = "refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr;
+  client.println("POST /Api/AddParking/3 HTTP/1.1");
+  client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
+  client.println("Host: 192.168.1.124");
+  client.println("User-Agent: Arduino/KevinOffice/1.0");
+ // client.println("Connection: close");
+  client.print("Content-Length: ");
+  client.println(PostData.length());
+  client.println();
+  client.println(PostData);
   
-    char buffer2[14]; 
-    String tempStr = dtostrf(value, 7,2,buffer2);
-    client.println("POST /device/post/ HTTP/1.0");
-    client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
-    client.println("Host: 192.168.1.2:8001?refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr);
-    client.println(lengthStr);
-    client.println();
-  //client.println(values);
-    client.println();
-
   // we have read all we need from the server stop now
   if(!client.connected()) {
     client.stop();
