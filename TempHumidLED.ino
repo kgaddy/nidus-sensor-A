@@ -23,7 +23,7 @@
 const byte ADDRESS = 0x27;
 const int  CLOCK_PIN = 5;
 const int  DATA_PIN = 4;
-const int  minutes = 30; //actually 1/2 minute
+const int  minutes = 15;
 int  minutes_count = 0;
 byte mac[] = {  
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -59,7 +59,7 @@ void setup() {
   digitalWrite( DATA_PIN, HIGH ); 
   
   // Give sensor time to start up 
-  delay( 5000 );
+ // delay( 5000 );
   Alarm.timerRepeat(59, Repeats); // every minute
 }
 
@@ -107,7 +107,7 @@ void loop() {
   
   updateLCD(" Temp  Humidity",( temperature * 9 ) / 5 + 32,humidity);
   
-  client.connect(server, 8001);
+ 
 
     //logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
    // logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");
@@ -193,8 +193,10 @@ void updateLCD(String title,float temp,float humidity){
 
 
 void logMsgToServer(String code, String descr, float value,String lengthStr){
+  client.connect(server, 8001);
+  delay(2000);
   char buffer2[14]; 
-  String tempStr = dtostrf(value, 7,2,buffer2);
+  String tempStr = dtostrf(value,5,2,buffer2);
   String PostData = "refId=1&code=" + code + "&descr=" + descr + "&value=" + tempStr;
   client.println("POST /Api/AddParking/3 HTTP/1.1");
   client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
@@ -205,9 +207,11 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
   client.println(PostData.length());
   client.println();
   client.println(PostData);
+  Serial.println(PostData);
   
   // we have read all we need from the server stop now
   if(!client.connected()) {
+    Serial.println("Client Stop");
     client.stop();
   }
 }
