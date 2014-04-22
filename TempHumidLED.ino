@@ -24,6 +24,11 @@ const byte ADDRESS = 0x27;
 const int  CLOCK_PIN = 5;
 const int  DATA_PIN = 4;
 const int  minutes = 15;
+
+//led
+int redPin = 12;
+int greenPin = 8;
+
 int  minutes_count = 0;
 byte mac[] = {  
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -41,6 +46,8 @@ String varOne,contentLen,length;
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
+  
+  
  //setTime(8,29,0,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
   //LCD
   // declare pin 9 to be an output:
@@ -50,7 +57,7 @@ void setup() {
   
   Ethernet.begin(mac, ip);
   //TEMPHUMID
-    // Start serial and 1-wire communication
+   // Start serial and 1-wire communication
   Serial.begin( 9600 );
   Wire.begin();
    
@@ -58,14 +65,11 @@ void setup() {
   pinMode( DATA_PIN, OUTPUT );
   digitalWrite( DATA_PIN, HIGH ); 
   
-  // Give sensor time to start up 
- // delay( 5000 );
-  Alarm.timerRepeat(59, Repeats); // every minute
+  Alarm.timerRepeat(1, Repeats); // every minute
 }
 
 void loop() {
-  //timer = (millis()/1000);
-  //Serial.println(timer);
+ 
   Alarm.delay(1000); // wait one second between clock display
   byte state;
  
@@ -106,13 +110,8 @@ void loop() {
   delay( 5000 );
   
   updateLCD(" Temp  Humidity",( temperature * 9 ) / 5 + 32,humidity);
-  
- 
 
-    //logMsgToServer("temp" , "Temp Sensor office", ( temperature * 9 ) / 5 + 32,"50");
-   // logMsgToServer("humidty" , "humidity Sensor office", humidity,"50");
-
-
+   digitalWrite(greenPin, HIGH);
 }
 
 void Repeats(){
@@ -176,6 +175,7 @@ byte getTemperatureHumidity( float &hdata, float &tdata )
 }
 
 void updateLCD(String title,float temp,float humidity){
+  
   lcd.begin(16, 2);
   // Print a message to the LCD.
   lcd.print(title);
@@ -193,6 +193,7 @@ void updateLCD(String title,float temp,float humidity){
 
 
 void logMsgToServer(String code, String descr, float value,String lengthStr){
+  digitalWrite(redPin, LOW);
   client.connect(server, 8001);
   delay(2000);
   char buffer2[14]; 
@@ -202,7 +203,6 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
   client.println("Content-Type: application/x-www-form-urlencoded; charset=utf-8");
   client.println("Host: 192.168.1.124");
   client.println("User-Agent: Arduino/KevinOffice/1.0");
- // client.println("Connection: close");
   client.print("Content-Length: ");
   client.println(PostData.length());
   client.println();
@@ -211,8 +211,14 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
   
   // we have read all we need from the server stop now
   if(!client.connected()) {
+    digitalWrite(redPin, HIGH);
+    digitalWrite(greenPin, LOW);
     Serial.println("Client Stop");
     client.stop();
+  }
+  else{
+    digitalWrite(greenPin, HIGH);
+    digitalWrite(redPin, LOW);
   }
 }
 
