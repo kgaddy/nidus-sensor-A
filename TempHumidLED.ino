@@ -1,6 +1,6 @@
 /*
   The circuit:
- * LCD RS pin to digital pin 12
+ * LCD RS pin to digital pin 7
  * LCD Enable pin to digital pin 11
  * LCD R/W pin to Ground 
  * LCD VO pin (pin 3) to PWM pin 9
@@ -47,7 +47,10 @@ LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
   
-  
+  // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("hello, world!");
  //setTime(8,29,0,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
   //LCD
   // declare pin 9 to be an output:
@@ -65,11 +68,12 @@ void setup() {
   pinMode( DATA_PIN, OUTPUT );
   digitalWrite( DATA_PIN, HIGH ); 
   
-  Alarm.timerRepeat(1, Repeats); // every minute
+  Alarm.timerRepeat(59, Repeats); // every minute
 }
 
 void loop() {
- 
+  //digitalWrite(redPin, HIGH);
+  //digitalWrite(greenPin, HIGH);
   Alarm.delay(1000); // wait one second between clock display
   byte state;
  
@@ -111,7 +115,7 @@ void loop() {
   
   updateLCD(" Temp  Humidity",( temperature * 9 ) / 5 + 32,humidity);
 
-   digitalWrite(greenPin, HIGH);
+   //digitalWrite(greenPin, HIGH);
 }
 
 void Repeats(){
@@ -214,9 +218,11 @@ void logMsgToServer(String code, String descr, float value,String lengthStr){
     digitalWrite(redPin, HIGH);
     digitalWrite(greenPin, LOW);
     Serial.println("Client Stop");
+    Serial.println("No Connection");
     client.stop();
   }
   else{
+    Serial.println("Connection");
     digitalWrite(greenPin, HIGH);
     digitalWrite(redPin, LOW);
   }
